@@ -38,7 +38,8 @@ end controller;
 
 architecture synth of controller is
 
-    type StateType is (FETCH1, FETCH2, DECODE, R_OP, STORE, BREAK, LOAD1, I_OP, LOAD2);
+    type StateType is (FETCH1, FETCH2, DECODE, R_OP, STORE,
+         BREAK, LOAD1, I_OP, LOAD2, BRANCH, CALL, JMP);
     signal s_cur_state, s_next_state ,s_execute_state: StateType;
     signal s_op,s_opx: std_logic_vector(7 downto 0);
 
@@ -46,13 +47,6 @@ begin
 	--basic operations
 	s_op <= "00"&op;
 	s_opx <= "00"&opx;
-    --unused outputs
-    branch_op  <='0';
-    pc_add_imm <='0';
-    pc_sel_a   <='0';
-    pc_sel_imm <='0';   
-    sel_pc     <='0';
-    sel_ra     <='0';
     
 
     --FSM
@@ -73,19 +67,30 @@ begin
         BREAK when BREAK,
         FETCH1 when others;
 
-    execute_state: process(s_op,s_opx)
+    execute_state: process(s_op,s_opx)--Decoder
     begin
         case (s_op) is
       	when x"3A" =>
-      		if (s_opx) = x"34" then
-                s_execute_state<=BREAK;
-            else
+            case(s_opx) is
+            when x"34" =>
+                s_execute_state<= BREAK;
+            when x"0D"|x"05" =>
+                s_execute_state<= JMP;
+            when x"1D" =>
+                s_execute_state<= CALL;--callR
+            when others =>
                 s_execute_state<=R_OP;
-            end if;
+            end case;
         when x"17" =>
         	s_execute_state<= LOAD1;
         when x"15"=>
         	s_execute_state<= STORE;
+        when x"00"=>
+            s_execute_state<= CALL;
+        when x"01"=>
+            s_execute_state<= JMP;--jumpI
+        when x"06"|x"0E"|x"16"|x"1E"|x"26"|x"2E"|x"36"=>
+            s_execute_state<= BRANCH;
         when others =>
         	s_execute_state <= I_OP;
         end case;
@@ -106,6 +111,12 @@ begin
         sel_rC<='0';
         sel_addr<='0';
         sel_mem<='0';
+        sel_pc<='0';
+        sel_ra<='0';
+        branch_op<='0';
+        pc_add_imm<='0';
+        pc_sel_a<='0';
+        pc_sel_imm<='0';
 
         case s_cur_state is
         when FETCH1 =>
@@ -138,30 +149,79 @@ begin
         	sel_addr<='1';
         	imm_signed<='1';
 
+        when BRANCH=>
+            sel_b<='1';
+            branch_op<='1';
+            pc_add_imm<='1';
+            if s_op = x"06" then
+                pc_en <= '1';
+            end if; 
+
+        when CALL=>
+            rf_wren<='1';
+            pc_en<='1';
+            sel_pc<='1';
+            sel_ra<='1';
+            if s_op = x"00" then 
+                pc_sel_imm<='1';--jumpI
+            else
+                pc_sel_a<='1';
+            end if;
+
+
+        when JMP=>
+            pc_en<='1';
+            if s_op = x"01" then 
+                pc_sel_imm<='1';
+            else
+                pc_sel_a<='1';--callR
+            end if;
+
         when others=>
         	null;
          --BREAK or DECODE
         end case;
     end process execution;
 
-
+    --alu_op
     alu_control : process (s_opx, s_op)
     begin
-      case (s_op) is
-      when x"3A" =>	--R-type instructions use the opx to leave room for I-type instructions
-      	case (s_opx) is 
-      		when x"0E"=>
-      			op_alu<="100001";--and
-      		when x"1B"=>
-      			op_alu<="110011";--srl
-      		when others =>
-      			op_alu<=(others=>'0');
-      	end case;
-      when x"04"|x"17"|x"15"=>
-      	op_alu<="000000";--add
-      when others=>
-      	op_alu<=(others=>'0');
-      end case;
+
+        case (s_op) is
+        when x"3A" =>	--R-type instructions use the opx to leave room for I-type instructions
+          	case (s_opx) is 
+          		when x"0E"=>
+          			op_alu<="100001";--and
+          		when x"1B"=>
+          			op_alu<="110011";--srl
+          		when others =>
+          			op_alu<=(others=>'0');
+          	end case;
+
+        when x"04"|x"17"|x"15"=>
+            op_alu<="000000";--add
+
+        when x"0E"=>
+            op_alu<="011001";
+
+        when x"16"=>
+            op_alu<="011010";
+
+        when x"1E"=>
+            op_alu<="011011";
+
+        when x"26"=>
+            op_alu<="011100";
+
+        when x"2E"=>
+            op_alu<="011101";
+
+        when x"36"=>
+            op_alu<="011110";
+
+        when others=>
+            op_alu<=(others=>'0');
+        end case;
 
 
 
