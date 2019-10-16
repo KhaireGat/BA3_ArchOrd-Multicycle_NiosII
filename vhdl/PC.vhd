@@ -29,8 +29,6 @@ begin
         elsif rising_edge(clk) then
             if en='1' then
                 s_addr<=s_next;
-                --s_next(31 downto 0)<= std_logic_vector(unsigned(s_next(31 downto 0))+to_unsigned(4, 16)); 
-
             end if;
         end if;
     end process;
@@ -39,25 +37,8 @@ begin
     control_flow : process(s_addr, add_imm, sel_imm, sel_a, imm, a) is
     begin
 
-            --if (add_imm = '1') then                    -- BRANCH
-            --    s_next <= "0x0000" & std_logic_vector(signed(s_next) + signed(imm));
-
-            --elsif (sel_imm = '1') then                              -- CALL
-            --    s_next <= "0x00000000";
-            --    s_next(17 downto 2) <= imm;
-
-            --elsif (sel_a = '1') then                                -- CALLR
-            --    s_add <= "0x0000" & a;
-
-            --elsif (sel_a = '1') then                                -- JMP
-            --    s_add <= "0x0000" & a;
-
-            --elsif (sel_imm = '1') then                              -- JUMPI
-            --    s_next <= "0x00000000";
-            --    s_next(17 downto 2) <= imm;
-
         s_next<= std_logic_vector(unsigned(s_addr(31 downto 0))+to_unsigned(4, 32));
-        
+
         if (add_imm = '1') then                                 -- BRANCH
             s_next <= std_logic_vector(signed(s_next) + to_signed(to_integer(signed(imm)), 32));
 
@@ -69,10 +50,6 @@ begin
 
 
         end if;
-
-
-        -- normal case? address + 4
-
     end process control_flow;
 
 end synth;
