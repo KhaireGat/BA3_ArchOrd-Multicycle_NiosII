@@ -27,7 +27,7 @@ architecture synth of RAM is
 
 begin
 
-	s_integer_address<=to_integer(unsigned(address));
+	s_integer_address<=to_integer(unsigned(s_address));
 
 	s_read<=reg(s_integer_address);
 
