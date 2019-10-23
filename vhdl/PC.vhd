@@ -21,7 +21,8 @@ architecture synth of PC is
 begin
     
     
-    addr<=s_addr;
+    --addr <= ((15 downto 0) => s_addr(15 downto 0), others => '0');
+    addr <= X"0000" & s_addr(15 downto 0);
     process(reset_n,clk)
     begin
         if reset_n='0' then
@@ -37,7 +38,7 @@ begin
     control_flow : process(s_addr, add_imm, sel_imm, sel_a, imm, a) is
     begin
 
-        s_next<= std_logic_vector(unsigned(s_addr(31 downto 0))+to_unsigned(4, 32));
+        s_next <= std_logic_vector(unsigned(s_addr(31 downto 0))+to_unsigned(4, 32));
 
         if (add_imm = '1') then                                 -- BRANCH
             s_next <= std_logic_vector(signed(s_next) + to_signed(to_integer(signed(imm)), 32));
