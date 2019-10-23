@@ -22,14 +22,14 @@ begin
     
     
     --addr <= ((15 downto 0) => s_addr(15 downto 0), others => '0');
-    addr <= X"0000" & s_addr(15 downto 0);
+    addr <= s_addr;
     process(reset_n,clk)
     begin
         if reset_n='0' then
             s_addr<=(others => '0');
         elsif rising_edge(clk) then
             if en='1' then
-                s_addr<=s_next;
+                s_addr<=X"0000" & s_next(15 downto 0);
             end if;
         end if;
     end process;
