@@ -159,6 +159,7 @@ begin
         	write<='1';
         	sel_addr<='1';
         	imm_signed<='1';
+            --sel_b <= '1';
 
         when BRANCH=>
             sel_b<='1';
