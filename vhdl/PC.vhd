@@ -38,16 +38,20 @@ begin
     control_flow : process(s_addr, add_imm, sel_imm, sel_a, imm, a) is
     begin
 
-        s_next <= std_logic_vector(unsigned(s_addr(31 downto 0))+to_unsigned(4, 32));
+        --s_next <= std_logic_vector(unsigned(s_addr(31 downto 0))+to_unsigned(4, 32));
 
         if (add_imm = '1') then                                 -- BRANCH
-            s_next <= std_logic_vector(signed(s_next) + to_signed(to_integer(signed(imm)), 32));
+            s_next <= std_logic_vector(signed(s_addr) + to_signed(to_integer(signed(imm)), 32));
 
         elsif (sel_imm = '1') then                              -- CALL & JUMPI (same)
-            s_next(17 downto 2) <= imm;
+            s_next(15 downto 0) <= imm(13 downto 0)&"00";
 
         elsif (sel_a = '1') then                                -- CALLR & JMP (same)
             s_next(15 downto 0) <=  a;
+
+	else
+	    s_next <= std_logic_vector(unsigned(s_addr(31 downto 0))+to_unsigned(4, 32));
+		
 
 
         end if;
