@@ -65,7 +65,7 @@ begin
 
 		if rising_edge(clk) then
 			if (write = '1' and cs = '1') then
-				reg(s_integer_address) <= wrdata;
+				reg(address) <= wrdata;
 
 			end if;
 		end if;
