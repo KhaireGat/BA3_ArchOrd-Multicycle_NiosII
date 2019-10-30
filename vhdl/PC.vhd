@@ -29,7 +29,7 @@ begin
             s_addr<=(others => '0');
         elsif rising_edge(clk) then
             if en='1' then
-                s_addr<=X"0000" & s_next(15 downto 0);
+                s_addr<=X"0000" & s_next(15 downto 2)&"00";
             end if;
         end if;
     end process;
@@ -42,14 +42,14 @@ begin
 
         if (add_imm = '1') then                                 -- BRANCH
             s_next <= std_logic_vector(signed(s_addr) + to_signed(to_integer(signed(imm)), 32));
-            s_next <= s_next(32 downto 2)&"00";
+            
 
         elsif (sel_imm = '1') then                              -- CALL & JUMPI (same)
             s_next(15 downto 0) <= imm(13 downto 0)&"00";
 
         elsif (sel_a = '1') then                                -- CALLR & JMP (same)
             s_next(15 downto 0) <=  a;
-            s_next <= s_next(32 downto 2)&"00";
+            
 
 	else
 	    s_next <= std_logic_vector(unsigned(s_addr(31 downto 0))+to_unsigned(4, 32));
